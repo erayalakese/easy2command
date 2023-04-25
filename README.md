@@ -1,5 +1,7 @@
 # Easy2Command
 
+> :warning: Only for local use. Lack of basic security checks.
+
 A helper package for creating CLI applications using Commander.js and Inquirer.js.
 
 Easy2Command makes it easy to load and execute commands from a directory of JavaScript files, and automatically creates
