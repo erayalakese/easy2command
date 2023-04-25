@@ -8,7 +8,7 @@ an interactive menu for users to choose from.
 ## Installation
 
 ```bash
-npm install commandhelper
+npm install easy2command
 ```
 
 ## Usage

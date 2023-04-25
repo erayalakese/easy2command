@@ -1,4 +1,3 @@
-// index.js
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -24,8 +23,8 @@ class CommandHelper {
         const filteredFiles = commandFiles.filter(file => file.endsWith('.js'));
 
         return Promise.all(filteredFiles.map(async file => {
-            const filePath = path.join(this.commandDir, file);
-            const { default: Command } = await import(`file://${filePath}`);
+            const filePath = path.join(".", this.commandDir, file).replace(/\\/g, '/');
+            const { default: Command } = await import((`./${filePath}`));
             return new Command();
         }));
     }
@@ -44,11 +43,34 @@ class CommandHelper {
         await Promise.all(this.commands.map(command => this.registerCommand(command)));
     }
 
+    async createNewCommand(commandName) {
+        const commandTemplate = `
+class ${commandName}Command {
+  constructor() {
+    this.name = '${commandName}';
+    this.description = 'Say hello';
+  }
+
+  async run() {
+    console.log('Hello, world!');
+  }
+}
+
+export default ${commandName}Command;
+`;
+
+        const filePath = path.join(this.commandDir, `${commandName}.js`);
+        await fs.writeFile(filePath, commandTemplate.trim());
+    }
+
     async displayInteractiveMenu() {
         const choices = this.commands.map(command => ({
             name: `${command.name} - ${command.description}`,
             value: command,
         }));
+
+        choices.push(new inquirer.Separator());
+        choices.push({ name: 'Create a new command', value: 'new-command' });
 
         const { selectedCommand } = await inquirer.prompt([
             {
@@ -59,7 +81,22 @@ class CommandHelper {
             },
         ]);
 
-        await selectedCommand.run();
+        if (selectedCommand === 'new-command') {
+            const { commandName } = await inquirer.prompt([
+                {
+                    type: 'input',
+                    name: 'commandName',
+                    message: 'Enter the name for the new command:',
+                },
+            ]);
+
+            await this.createNewCommand(commandName);
+            console.log(`New command "${commandName}" created.`);
+            this.commands = await this.loadCommands();
+            await this.displayInteractiveMenu();
+        } else {
+            await selectedCommand.run();
+        }
     }
 }
 
